@@ -1,4 +1,4 @@
-name: Build and deploy container app to Azure Web App - app-shir
+name: Build and deploy SHIR to Azure App Service
 
 on:
   push:
@@ -8,36 +8,26 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: windows-2022
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Verify Docker
-        shell: powershell
-        run: |
-          docker version
-          docker info
-
-      - name: Docker login to container registry
-        uses: docker/login-action@v3
+      - name: Azure Login
+        uses: azure/login@v2
         with:
-          registry: crfeniciadev.azurecr.io
-          username: ${{ secrets.AZUREAPPSERVICE_CONTAINERUSERNAME_C0CA0E296C9A45CB8323DCB48FE42A6D }}
-          password: ${{ secrets.AZUREAPPSERVICE_CONTAINERPASSWORD_EE97D31A489844FDBE998481D99F812B }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Build container
-        shell: powershell
+      - name: Build image in Azure Container Registry
         run: |
-          docker build -t crfeniciadev.azurecr.io/shir:${{ github.sha }} .
-
-      - name: Push container
-        shell: powershell
-        run: |
-          docker push crfeniciadev.azurecr.io/shir:${{ github.sha }}
+          az acr build \
+            --registry crfeniciadev \
+            --image shir:${{ github.sha }} \
+            --platform Windows/amd64 \
+            .
 
       - name: Deploy container to Azure App Service
-        uses: Azure/webapps-deploy@v2
+        uses: Azure/webapps-deploy@v3
         with:
           app-name: app-shir
           slot-name: Production
