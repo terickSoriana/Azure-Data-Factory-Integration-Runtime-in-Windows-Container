@@ -8,18 +8,21 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: windows-2022
 
     steps:
       - uses: actions/checkout@v4
 
+      - name: Start Docker
+        shell: powershell
+        run: |
+          Start-Service -Name Docker
+          (Get-Service -Name Docker).WaitForStatus('Running', '00:01:00')
+          docker ps
+
       - name: Verify Docker
         shell: powershell
         run: |
-          $dockerService = Get-Service -Name docker -ErrorAction Stop
-          if ($dockerService.Status -ne 'Running') {
-            Start-Service -Name docker
-          }
           docker version
           docker info
 
@@ -33,9 +36,7 @@ jobs:
       - name: Build container
         shell: powershell
         run: |
-          docker build --isolation=hyperv `
-            -t crfeniciadev.azurecr.io/shir:${{ github.sha }} `
-            .
+          docker build --isolation=hyperv -t crfeniciadev.azurecr.io/shir:${{ github.sha }} .
 
       - name: Push container
         shell: powershell
