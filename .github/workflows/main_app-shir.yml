@@ -8,13 +8,12 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: windows-2022
+    runs-on: ubuntu-22.04
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Verify Docker
-        shell: powershell
         run: |
           docker version
           docker info
@@ -27,14 +26,10 @@ jobs:
           password: ${{ secrets.AZUREAPPSERVICE_CONTAINERPASSWORD_EE97D31A489844FDBE998481D99F812B }}
 
       - name: Build container
-        shell: powershell
         run: |
-          docker build --isolation=hyperv `
-            -t crfeniciadev.azurecr.io/shir:${{ github.sha }} `
-            .
+          docker build -t crfeniciadev.azurecr.io/shir:${{ github.sha }} .
 
       - name: Push container
-        shell: powershell
         run: |
           docker push crfeniciadev.azurecr.io/shir:${{ github.sha }}
 
